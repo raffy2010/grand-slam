@@ -1,0 +1,7 @@
+target/
+resources/public/img/
+resources/public/css/
+resources/public/js/
+resources/main.js
+*-init.clj
+figwheel_server.log

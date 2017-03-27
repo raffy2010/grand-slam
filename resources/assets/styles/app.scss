@@ -1,0 +1,118 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+div, p, ul, ol, li {
+  margin: 0;
+  padding: 0;
+}
+
+#app-container {
+  height: 100%;
+}
+
+.ui-root {
+  height: 100%;
+}
+
+.drag-zoom {
+  display: block;
+  height: 100%;
+
+  transition: all 0.3s;
+
+  &.inactive {
+    background-color: white;
+  }
+
+  &.active {
+    background-color: #eee;
+  }
+}
+
+.empty-hints {
+  display: flex;
+  height: 100%;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.video-count {
+  padding: 16px;
+}
+
+.video-card {
+  display: flex;
+  flex-flow: row wrap;
+  padding: 16px;
+  position: relative;
+
+  transition: all 0.3s;
+
+  &.video-selected {
+    background-color: #eee;
+  }
+
+  &.video-detailed {
+    .video-stream-detail {
+      display: block;
+    }
+  }
+
+  .video-preview {
+    width: 160px;
+    height: 90px;
+  }
+
+  .video-info {
+    flex: 1 0 auto;
+    margin-left: 16px;
+  }
+
+  .action-menu {
+    position: absolute;
+    top: 0;
+    right: 12px;
+  }
+
+  .video-stream-detail {
+    display: none;
+    width: 100%;
+  }
+
+  .video-stream {
+    display: flex;
+    flex-flow: column wrap;
+    height: 300px;
+    padding-top: 12px;
+
+
+    border-bottom: #eee 1px solid;
+
+    &:last-child {
+      border-bottom: 0 none;
+    }
+  }
+
+  .stream-field {
+    flex: 0 1 auto;
+    width: 20%;
+    margin: 0 0 6px;
+
+    dt {
+      color: rgba(#000, 0.6);
+      font-size: 14px;
+    }
+
+    dd {
+      margin: 0;
+
+      color: rgba(#000, 0.9);
+      font-size: 14px;
+    }
+  }
+}
+
