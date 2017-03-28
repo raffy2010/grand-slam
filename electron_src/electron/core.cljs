@@ -1,5 +1,7 @@
 (ns electron.core
- (:require [electron.ffmpeg]))
+ (:require [electron.state :refer [main-window]]
+           [electron.ffmpeg]
+           [electron.menu :refer [init-menu]]))
 
 (defonce path           (js/require "path"))
 
@@ -8,7 +10,6 @@
 (def browser-window (.-BrowserWindow electron))
 (def crash-reporter (.-crashReporter electron))
 
-(def main-window (atom nil))
 
 (defn init-browser []
  (reset! main-window (browser-window.
@@ -16,7 +17,8 @@
                                  :height 600})))
   ; Path is relative to the compiled js file (main.js in our case)
  (.loadURL @main-window (str "file://" js/__dirname "/public/index.html"))
- (.on @main-window "closed" #(reset! main-window nil)))
+ (.on @main-window "closed" #(reset! main-window nil))
+ (init-menu))
 
 ; CrashReporter can just be omitted
 (.start crash-reporter

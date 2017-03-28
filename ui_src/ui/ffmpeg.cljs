@@ -1,7 +1,7 @@
 (ns ui.ffmpeg
   (:require [cljs.core.match :refer-macros [match]]
-            [ui.state :refer [active-files err-msgs]]
-            [ui.utils.common :refer [file-uid msg-uid]]))
+   [ui.state :refer [active-files err-msgs convert-option]]
+   [ui.utils.common :refer [file-uid msg-uid]]))
 
 (defonce electron (js/require "electron"))
 
@@ -27,6 +27,14 @@
          (str "../../temp/"
               file-id
               "/preview_" index ".png")))
+
+(defn convert-video
+  [file]
+  (.send ipcRenderer
+         "ffmpeg-video-convert"
+         (clj->js file)
+         (clj->js @convert-option)))
+
 
 (defn preview
  [video]

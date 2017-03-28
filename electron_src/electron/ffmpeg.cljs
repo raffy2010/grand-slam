@@ -1,8 +1,8 @@
 (ns electron.ffmpeg
  (:require-macros [cljs.core.async.macros :refer [go]])
  (:require [cljs.core.match :refer-macros [match]]
-           [cljs.core.async :as async
-                            :refer [<! >! put! chan alts! timeout]]))
+          [cljs.core.async :as async
+           :refer [<! >! put! chan alts! timeout]]))
 
 
 (defonce child_process (js/require "child_process"))
@@ -77,18 +77,28 @@
                 [nil @output-str]))
     out))
 
+(defn probe-video
+  "probe video"
+  [file-path]
+  (spawn-process ffprobe-bin
+                 ["-loglevel" "error"
+                  "-of" "json"
+                  "-show_streams" "-show_format"
+                  file-path]))
+
+(defn respond-probe
+  "respond to probe request"
+  [sender ret]
+  (.send sender
+        "ffmpeg-probe-resp"
+        (format-invoke-resp ret)))
+
 (defn- handle-probe
   "handle-probe"
   [event file-path]
   (go
-    (let [ret (<! (spawn-process ffprobe-bin
-                                 ["-loglevel" "error"
-                                  "-of" "json"
-                                  "-show_streams" "-show_format"
-                                  file-path]))]
-      (.send (.-sender event)
-             "ffmpeg-probe-resp"
-             (format-invoke-resp ret)))))
+    (let [ret (<! (probe-video file-path))]
+      (respond-probe (.-sender event) ret))))
 
 (defn- preview-file-dir
   "gen preview file dir"
@@ -129,7 +139,28 @@
            (fail-invoke-resp mkdir-err)))))))
 
 
+(defn- handle-video-convert
+  [event video convert-option]
+  (go
+    (let [file-id (aget video "id")
+          [convert-err]
+          (<! (spawn-process ffmpeg-bin
+                             (construct-convert-args video
+                                                     convert-option)))]
+      (.send (.-sender event)
+             "ffmpeg-video-convert-resp"
+             (if (nil? convert-err)
+               (success-invoke-resp file-id)
+               (fail-invoke-resp convert-err))))))
+
+(defn construct-convert-args
+  [convert-option]
+  (let [file-path (aget video "format" "filename")
+        base-args ["-i" file-path]]
+    (match convert-option
+           {:type convert-type} (conj base-args))))
+
 (.on ipcMain "ffmpeg-probe" handle-probe)
 (.on ipcMain "ffmpeg-video-preview" handle-video-preview)
-
+(.on ipcMain "ffmpeg-video-convert" handle-video-convert)
 

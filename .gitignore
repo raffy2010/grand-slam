@@ -5,3 +5,6 @@ resources/public/js/
 resources/main.js
 *-init.clj
 figwheel_server.log
+.cljs_rhino_repl/
+.lein-repl-history
+.nrepl-port
