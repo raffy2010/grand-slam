@@ -1,9 +1,9 @@
 (ns electron.core
  (:require [electron.state :refer [main-window]]
            [electron.ffmpeg]
-           [electron.menu :refer [init-menu]]))
+           [electron.menu :refer [init-menu]]
+           [electron.init :refer [prepare-preview-dir]]))
 
-(defonce path           (js/require "path"))
 
 (def electron       (js/require "electron"))
 (def app            (.-app electron))
@@ -18,7 +18,9 @@
   ; Path is relative to the compiled js file (main.js in our case)
  (.loadURL @main-window (str "file://" js/__dirname "/public/index.html"))
  (.on @main-window "closed" #(reset! main-window nil))
- (init-menu))
+ (init-menu)
+ (prepare-preview-dir))
+
 
 ; CrashReporter can just be omitted
 (.start crash-reporter

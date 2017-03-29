@@ -3,7 +3,14 @@
    [ui.state :refer [active-files err-msgs convert-option]]
    [ui.utils.common :refer [file-uid msg-uid]]))
 
+(defonce path (js/require "path"))
+
 (defonce electron (js/require "electron"))
+(defonce app      (.-app (.-remote electron)))
+
+(def preview-dir (.resolve path
+                           (.getPath app "userData")
+                           "preview"))
 
 (defonce ipcRenderer (.-ipcRenderer electron))
 
@@ -24,7 +31,8 @@
   (swap! active-files
          assoc-in
          [file-id :preview-src]
-         (str "../../temp/"
+         (str preview-dir
+              "/"
               file-id
               "/preview_" index ".png")))
 

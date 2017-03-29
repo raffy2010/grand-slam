@@ -1,36 +1,17 @@
 (ns electron.ffmpeg
  (:require-macros [cljs.core.async.macros :refer [go]])
  (:require [cljs.core.match :refer-macros [match]]
-          [cljs.core.async :as async
-           :refer [<! >! put! chan alts! timeout]]))
-
+           [cljs.core.async :as async :refer [<! >! put! chan alts! timeout]]
+           [electron.common :refer [ffmpeg-bin ffprobe-bin preview-dir]]
+           [electron.utils :refer [mkdir]]))
 
 (defonce child_process (js/require "child_process"))
 
 (defonce electron       (js/require "electron"))
 (defonce path           (js/require "path"))
-(defonce fs             (js/require "fs"))
 
 (def ipcMain        (.-ipcMain electron))
 
-(def root-dir (.resolve path js/__dirname ".."))
-
-(def ffmpeg-bin (.resolve path root-dir "bin/ffmpeg"))
-(def ffprobe-bin (.resolve path root-dir "bin/ffprobe"))
-
-(defn chanify
-  "change behavior of normal node.js async apis, having
-  a callback as the last argument; return a async channel"
-  [origin-fn]
-  (fn [& args]
-    (let [out (chan)]
-      (apply origin-fn
-             (clj->js (conj (vec args)
-                            #(put! out (js->clj [%1 %2])))))
-      out)))
-
-
-(def mkdir (chanify (.-mkdir fs)))
 
 (defn format-invoke-resp
   "format ipc invoke response"
@@ -104,16 +85,15 @@
   "gen preview file dir"
   [file-id]
   (.resolve path
-            js/__dirname
-            "../"
-            (str "temp/" file-id "/")))
+            preview-dir
+            file-id))
 
 (defn- preview-file-name
   "gen preview file name"
   [time file-id]
   (.resolve path
-            (preview-file-dir file-id)
-            (str "preview_" time ".png")))
+           (preview-file-dir file-id)
+           (str "preview_" time ".png")))
 
 (defn- handle-video-preview
   "handle video preview"
@@ -138,6 +118,12 @@
                (fail-invoke-resp preview-err)))
            (fail-invoke-resp mkdir-err)))))))
 
+(defn construct-convert-args
+  [video convert-option]
+  (let [file-path (aget video "format" "filename")
+        base-args ["-i" file-path]]
+    (match convert-option
+           {:type convert-type} (conj base-args))))
 
 (defn- handle-video-convert
   [event video convert-option]
@@ -153,14 +139,7 @@
                (success-invoke-resp file-id)
                (fail-invoke-resp convert-err))))))
 
-(defn construct-convert-args
-  [convert-option]
-  (let [file-path (aget video "format" "filename")
-        base-args ["-i" file-path]]
-    (match convert-option
-           {:type convert-type} (conj base-args))))
 
 (.on ipcMain "ffmpeg-probe" handle-probe)
 (.on ipcMain "ffmpeg-video-preview" handle-video-preview)
 (.on ipcMain "ffmpeg-video-convert" handle-video-convert)
-
