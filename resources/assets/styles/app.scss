@@ -78,6 +78,12 @@ div, p, ul, ol, li {
     right: 12px;
   }
 
+  .convert-progress-bar {
+    position: absolute !important;
+    bottom: 0;
+    left: 0;
+  }
+
   .video-stream-detail {
     display: none;
     width: 100%;

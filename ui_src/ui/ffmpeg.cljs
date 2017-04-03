@@ -1,7 +1,12 @@
 (ns ui.ffmpeg
   (:require [cljs.core.match :refer-macros [match]]
-   [ui.state :refer [active-files err-msgs convert-option]]
-   [ui.utils.common :refer [file-uid msg-uid]]))
+   [ui.state :refer [active-files
+                     messages
+                     convert-option
+                     tasks]]
+   [ui.utils.common :refer [file-uid
+                            msg-uid
+                            task-uid]]))
 
 (defonce path (js/require "path"))
 
@@ -9,8 +14,8 @@
 (defonce app      (.-app (.-remote electron)))
 
 (def preview-dir (.resolve path
-                           (.getPath app "userData")
-                           "preview"))
+                      (.getPath app "userData")
+                      "preview"))
 
 (defonce ipcRenderer (.-ipcRenderer electron))
 
@@ -37,22 +42,53 @@
               "/preview_" index ".png")))
 
 (defn convert-video
+  [file convert-option]
+  (let [task-id (task-uid)]
+    (swap! tasks assoc task-id {:id task-id
+                                :file-id (:id file)})
+    (.send ipcRenderer
+           "ffmpeg-video-convert"
+           task-id
+           (clj->js file)
+           (clj->js convert-option))))
+
+(defn export-video
   [file]
   (.send ipcRenderer
-         "ffmpeg-video-convert"
+         "ffmpeg-video-export"
          (clj->js file)
          (clj->js @convert-option)))
+
+(defn cancel-convert
+  [pid]
+  (.send ipcRenderer
+         "ffmpeg-video-cancel-convert"
+         (clj->js pid)))
 
 
 (defn preview
  [video]
  (.send ipcRenderer "ffmpeg-video-preview" (clj->js video)))
 
+
+(defn add-msg
+  [msg-type text]
+  (let [new-msg-id (msg-uid)]
+    (swap! messages
+           assoc
+           new-msg-id
+           {:msg-id new-msg-id
+            :type msg-type
+            :text text})))
+
+(def add-success-msg (partial add-msg :success))
+(def add-error-msg (partial add-msg :error))
+(def add-info-msg (partial add-msg :info))
+
 (defn- handle-probe-result
   [event ret]
   (match (parse-invoke-resp ret)
-         [err] (swap! err-msgs conj {:msg-id (msg-uid)
-                                     :text err})
+         [err] (add-error-msg err)
          [nil data] (let [file-obj (.parse js/JSON data)
                           file-id (file-uid)]
                       (set! (.-id file-obj)
@@ -66,8 +102,53 @@
 (defn- handle-preview-result
   [event ret]
   (match (parse-invoke-resp ret)
-         [err] (swap! err-msgs conj {:msg-id (msg-uid)
-                                     :text err})
+         [err] (add-error-msg err)
          [nil file-id] (preview-src file-id 1)))
 
 (.on ipcRenderer "ffmpeg-video-preview-resp" handle-preview-result)
+
+(defn- handle-export-result
+  [event ret]
+  (match (parse-invoke-resp ret)
+         [nil {:file file
+               :convert-option convert-option}]
+         (convert-video file
+                        convert-option)))
+
+(.on ipcRenderer "ffmpeg-video-export-resp" handle-export-result)
+
+(defn handle-convert-begin
+  [event ret]
+  (match (parse-invoke-resp ret)
+         [err] (add-error-msg err)
+         [nil {:file-id file-id
+               :task-id task-id
+               :process-data process-data}]
+         (do
+           (swap! tasks assoc-in [task-id :process] process-data)
+           (swap! active-files
+                  assoc-in
+                  [file-id :convert-mode] nil))))
+
+(defn handle-convert-progress
+  [event ret]
+  (match (parse-invoke-resp ret)
+         [err] (add-error-msg err)
+         [nil {:task-id task-id
+               :progress progress}]
+         (swap! tasks assoc-in [task-id :process :progress] progress)))
+
+(defn- handle-convert-result
+  [event ret]
+  (match (parse-invoke-resp ret)
+         [err] (add-error-msg err)
+         [nil {:file-id file-id
+               :task-id task-id}]
+         (do
+           (swap! tasks dissoc task-id)
+           (add-success-msg "convert complete"))))
+
+(.on ipcRenderer "ffmpeg-video-convert-begin-resp" handle-convert-begin)
+(.on ipcRenderer "ffmpeg-video-convert-progress-resp" handle-convert-progress)
+(.on ipcRenderer "ffmpeg-video-convert-finish-resp" handle-convert-result)
+

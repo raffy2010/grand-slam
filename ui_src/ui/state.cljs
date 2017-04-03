@@ -4,4 +4,5 @@
 (defonce active-files    (atom (sorted-map)))
 (defonce convert-option  (atom {:type ""}))
 (defonce drag-files      (atom []))
-(defonce err-msgs        (atom []))
+(defonce messages        (atom (sorted-map)))
+(defonce tasks           (atom (sorted-map)))

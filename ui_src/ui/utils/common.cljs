@@ -9,4 +9,5 @@
 (def component-uid (partial common-uid "component"))
 (def file-uid (partial common-uid "file"))
 (def msg-uid (partial common-uid "msg"))
+(def task-uid (partial common-uid "task"))
 

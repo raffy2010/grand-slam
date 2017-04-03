@@ -3,6 +3,9 @@
  (:require [cljs.core.async :as async
             :refer [<! >! put! chan alts! timeout]]))
 
+(defonce electron       (js/require "electron"))
+
+(defonce dialog       (.-dialog electron))
 
 (defonce fs (js/require "fs"))
 
@@ -14,9 +17,12 @@
     (let [out (chan)]
       (apply origin-fn
              (clj->js (conj (vec args)
-                            #(put! out (js->clj [%1 %2])))))
+                            (fn [& callback-args]
+                              (put! out (js->clj callback-args))))))
       out)))
 
 (def mkdir (chanify (.-mkdir fs)))
 (def fs-access (chanify (.-access fs)))
+(def fs-unlink (chanify (.-unlink fs)))
 
+(def show-save-dialog (chanify (.-showSaveDialog dialog)))

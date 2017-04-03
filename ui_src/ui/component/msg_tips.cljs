@@ -1,21 +1,18 @@
 (ns ui.component.msg-tips
  (:require [cljs-react-material-ui.reagent :as ui]
-           [ui.utils.common :refer [component-uid]]
-           [ui.state :refer [err-msgs]]))
+           [ui.state :refer [messages]]))
 
-(defn remove-err-msg
+(defn remove-msg
  [msg-id]
- (reset! err-msgs
-         (filter #(not= (:msg-id %) msg-id)
-                 @err-msgs)))
+ (swap! messages dissoc msg-id))
 
 (defn msg-tips
   []
   [:div
-   (for [msg @err-msgs]
-    ^{:key (component-uid)}
+   (for [msg (vals @messages)]
+    ^{:key (:msg-id msg)}
     [ui/snackbar {:open true
-                  :message (:text msg)
+                  :message (str (:type msg) " " (:text msg))
                   :auto-hide-duration 4000
-                  :on-request-close (partial remove-err-msg (:msg-id msg))}])])
+                  :on-request-close (partial remove-msg (:msg-id msg))}])])
 

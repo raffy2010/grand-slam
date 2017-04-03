@@ -3,7 +3,8 @@
            [cljs-react-material-ui.reagent :as ui]
            [cljs-react-material-ui.icons :as ic]
            [cljs.core.match :refer-macros [match]]
-           [ui.state :refer [active-files convert-option]]))
+           [ui.state :refer [active-files convert-option]]
+           [ui.ffmpeg :refer [export-video]]))
 
 
 (def video-types [{:name "mp4"
@@ -11,7 +12,9 @@
                   {:name "mkv"
                    :value "mkv"}
                   {:name "avi"
-                   :value "avi"}])
+                   :value "avi"}
+                  {:name "mov"
+                   :value "mov"}])
 
 (defn toggle-convert-modal
   ""
@@ -20,9 +23,10 @@
     (reset! convert-option {})
     (swap! active-files assoc-in [file-id :convert-mode] nil)))
 
-(defn convert-video
+(defn select-output-target
   "convert video file"
-  [file])
+  [file]
+  (export-video file))
 
 (defn convert-actions
   [file]
@@ -30,7 +34,7 @@
                          :on-click (partial toggle-convert-modal file)}]
         [ui/flat-button {:label "Convert"
                          :primary true
-                         :on-click (partial convert-video file)}]])
+                         :on-click (partial select-output-target file)}]])
 
 (defn update-convert-type
   "update convert video type"

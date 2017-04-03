@@ -2,7 +2,6 @@
  (:require-macros [cljs.core.async.macros :refer [go]])
  (:require [electron.state :refer [main-window]]
            [electron.ffmpeg :refer [probe-video respond-probe]]
-           [cljs.core.match :refer-macros [match]]
            [cljs.core.async :as async :refer [<! >! put! chan alts! timeout]]))
 
 (defonce electron       (js/require "electron"))
@@ -12,9 +11,10 @@
 (defn handle-file-select
   [file-list]
   (go
-    (let [file (first file-list)
-          ret (<! (probe-video file))]
-      (respond-probe (.-webContents @main-window) ret))))
+    (when-let [file (first file-list)]
+      (->> @main-window
+           .-webContents
+           (respond-probe (<! (probe-video file)))))))
 
 (defn open-file
   "open video files"
@@ -60,4 +60,5 @@
   []
   (.setApplicationMenu (.-Menu electron)
                        app-menu))
+
 
