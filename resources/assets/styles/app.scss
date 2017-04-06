@@ -65,6 +65,7 @@ div, p, ul, ol, li {
   .video-preview {
     width: 160px;
     height: 90px;
+    position: relative;
   }
 
   .video-info {
@@ -87,6 +88,54 @@ div, p, ul, ol, li {
   .video-stream-detail {
     display: none;
     width: 100%;
+  }
+
+  .action-btn-enter {
+    opacity: 0;
+    transform: translateX(-20px);
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    position: absolute;
+
+    &.action-btn-enter-active {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .action-btn-leave {
+    opacity: 1;
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform: translateX(0);
+    position: absolute;
+
+    &.action-btn-leave-active {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+  }
+
+  .cancel-btn-enter {
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    position: absolute;
+
+    &.cancel-btn-enter-active {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .cancel-btn-leave {
+    position: absolute;
+    opacity: 1;
+    transform: translateX(0);
+    transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+
+    &.cancel-btn-leave-active {
+      opacity: 0;
+      transform: translateX(20px);
+    }
   }
 
   .video-stream {
