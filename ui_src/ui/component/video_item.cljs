@@ -12,20 +12,20 @@
 (defn toggle-file-select
   "doc-string"
   [file event]
-  (let [file-id (get file "id")]
+  (let [file-id (:id file)]
     (swap! active-files update-in [file-id :selected] not)))
 
 (defn toggle-file-detail
   "doc-string"
   [file event]
-  (let [file-id (get file "id")]
+  (let [file-id (:id file)]
     (.stopPropagation event)
     (swap! active-files update-in [file-id :detailed] not)))
 
 (defn toggle-convert-modal
  ""
  [file event elem]
- (let [file-id (get file "id")
+ (let [file-id (:id file)
        mode (.-type (.-props elem))]
    (swap! active-files assoc-in [file-id :convert-mode] mode)))
 

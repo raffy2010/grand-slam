@@ -1,12 +1,13 @@
 (ns ui.ffmpeg
   (:require [cljs.core.match :refer-macros [match]]
-   [ui.state :refer [active-files
-                     messages
-                     convert-option
-                     tasks]]
-   [ui.utils.common :refer [file-uid
-                            msg-uid
-                            task-uid]]))
+            [ui.state :refer [active-files
+                              messages
+                              convert-option
+                              tasks]]
+            [ui.utils.common :refer [file-uid
+                                     msg-uid
+                                     task-uid]]
+            [ui.utils.lang :refer [js->clj-kw]]))
 
 (defonce path (js/require "path"))
 
@@ -70,7 +71,6 @@
  [video]
  (.send ipcRenderer "ffmpeg-video-preview" (clj->js video)))
 
-
 (defn add-msg
   [msg-type text]
   (let [new-msg-id (msg-uid)]
@@ -85,17 +85,34 @@
 (def add-error-msg (partial add-msg :error))
 (def add-info-msg (partial add-msg :info))
 
+(defn check-stream-type
+  [stream-type file]
+  (->> file
+       :streams
+       (filter #(= stream-type
+                   (:codec_type %)))
+       empty?
+       not))
+
+
+(def check-video-stream (partial check-stream-type "video"))
+(def check-audio-stream (partial check-stream-type "audio"))
+(def check-subtitle-stream (partial check-stream-type "subtitle"))
+
 (defn- handle-probe-result
   [event ret]
   (match (parse-invoke-resp ret)
          [err] (add-error-msg err)
-         [nil data] (let [file-obj (.parse js/JSON data)
-                          file-id (file-uid)]
-                      (set! (.-id file-obj)
-                            file-id)
-                      (swap! active-files
-                             assoc file-id (js->clj file-obj))
-                      (preview file-obj)))) ;setup preview file
+         [nil data] (let [file-obj (->> data
+                                        (.parse js/JSON)
+                                        js->clj-kw)]
+                      (if-not (check-video-stream file-obj)
+                        (add-error-msg "current version only support file with video stream")
+                        (let [file-id (file-uid)
+                              file-with-id (assoc file-obj :id file-id)]
+                          (swap! active-files
+                                 assoc file-id file-with-id)
+                          (preview file-with-id)))))) ;setup preview file
 
 (.on ipcRenderer "ffmpeg-probe-resp" handle-probe-result)
 
@@ -139,14 +156,14 @@
          (swap! tasks assoc-in [task-id :process :progress] progress)))
 
 (defn- handle-convert-result
-  [event ret]
-  (match (parse-invoke-resp ret)
-         [err] (add-error-msg err)
-         [nil {:file-id file-id
-               :task-id task-id}]
-         (do
-           (swap! tasks dissoc task-id)
-           (add-success-msg "convert complete"))))
+ [event ret]
+ (match (parse-invoke-resp ret)
+        [err] (add-error-msg err)
+        [nil {:file-id file-id
+              :task-id task-id}]
+        (do
+          (swap! tasks dissoc task-id)
+          (add-success-msg "convert complete"))))
 
 (.on ipcRenderer "ffmpeg-video-convert-begin-resp" handle-convert-begin)
 (.on ipcRenderer "ffmpeg-video-convert-progress-resp" handle-convert-progress)

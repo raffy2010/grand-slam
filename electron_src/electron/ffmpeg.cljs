@@ -20,7 +20,7 @@
   (clj->js
     (match ret
            [nil data] {:status "ok" :data data}
-           [err :guard #(not (nil? %)) _] {:status "error" :msg err})))
+           [err :guard #(not (nil? %))] {:status "error" :msg err})))
 
 (defn success-invoke-resp
   "format success invoke response"

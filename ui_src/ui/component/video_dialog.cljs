@@ -14,12 +14,27 @@
                   {:name "avi"
                    :value "avi"}
                   {:name "mov"
-                   :value "mov"}])
+                   :value "mov"}
+                  {:name "mpg"
+                   :value "mpg"}
+                  {:name "mpeg"
+                   :value "mpeg"}
+                  {:name "ts"
+                   :value "ts"}
+                  {:name "webm"
+                   :value "webm"}
+                  {:name "ogg"
+                   :value "ogg"}
+                  {:name "flv"
+                   :value "flv"}
+                  {:name "3gp"
+                   :value "3gp"}
+                  {:name "asf"
+                   :value "asf"}])
 
 (defn toggle-convert-modal
-  ""
   [file]
-  (let [file-id (get file "id")]
+  (let [file-id (:id file)]
     (reset! convert-option {})
     (swap! active-files assoc-in [file-id :convert-mode] nil)))
 
@@ -45,7 +60,8 @@
   [file]
   [:div
     [:p "Please select target type: "]
-    [ui/drop-down-menu {:value (:type @convert-option)
+    [ui/drop-down-menu {:max-height 300
+                        :value (:type @convert-option)
                         :on-change update-convert-type}
       (for [video-type video-types]
         ^{:key video-type}
@@ -54,7 +70,6 @@
                        :primary-text (:name video-type)}])]])
 
 (defn convert-dialog
-  ""
   [file]
   [ui/dialog {:title "Convert video"
               :actions (r/as-element (convert-actions file))

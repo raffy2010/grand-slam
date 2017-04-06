@@ -7,5 +7,5 @@
   []
   [:div
    (for [file (vals @active-files)]
-     ^{:key (get file "id")}
+     ^{:key (:id file)}
      [video-item file])])
