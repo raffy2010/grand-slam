@@ -3,7 +3,8 @@
  (:require [cljs.core.match :refer-macros [match]]
            [cljs.core.async :as async :refer [<! >! put! chan alts! timeout]]
            [electron.common :refer [ffmpeg-bin ffprobe-bin preview-dir]]
-           [electron.utils :refer [mkdir fs-unlink show-save-dialog]]))
+           [electron.utils :refer [mkdir fs-unlink show-save-dialog]]
+           [electron.convert :refer [construct-convert-args]]))
 
 (defonce child_process (js/require "child_process"))
 
@@ -135,28 +136,17 @@
             (.send
               "ffmpeg-video-preview-resp"
               (if-not (nil? mkdir-err)
-                (fail-invoke-resp mkdir-err)
-                (let [[preview-err] (<! (->> ["-loglevel" "error"
-                                               "-i" file-name
-                                               "-r" second-rate
-                                               "-vf" "scale=-1:180"
-                                               "-vcodec" "png"
-                                               (str dirname "/preview_%d.png")]
-                                             (spawn-process ffmpeg-bin)))]
-                  (if (nil? preview-err)
-                    (success-invoke-resp file-id)
-                    (fail-invoke-resp preview-err))))))))))
-
-(defn construct-convert-args
-  [video convert-option]
-  (let [file-path (get-in video [:format :filename])
-        base-args ["-y" "-stats"
-                   "-loglevel" "error"
-                   "-i" file-path]]
-    (match [convert-option]
-           [{:type convert-type}] (conj base-args
-                                        (str (:target convert-option)
-                                             "." convert-type)))))
+               (fail-invoke-resp mkdir-err)
+               (let [[preview-err] (<! (->> ["-loglevel" "error"
+                                              "-i" file-name
+                                              "-r" second-rate
+                                              "-vf" "scale=-1:180"
+                                              "-vcodec" "png"
+                                              (str dirname "/preview_%d.png")]
+                                            (spawn-process ffmpeg-bin)))]
+                 (if (nil? preview-err)
+                   (success-invoke-resp file-id)
+                   (fail-invoke-resp preview-err))))))))))
 
 (defn send-channel-back
   "send channel back with response dadta"
@@ -197,7 +187,7 @@
                                  "ffmpeg-video-convert-progress-resp")
         finish-notify (partial send-channel-back
                                event
-                               "ffmpeg-video-convert-progress-resp")
+                               "ffmpeg-video-convert-finish-resp")
         calc-progress (partial convert-progress-data js-video)
         convert-args (construct-convert-args js-video
                                              js-convert-option)
@@ -206,8 +196,8 @@
           :task-id task-id
           :process-data {:pid (.-pid process)
                          :progress 0}}
-     success-invoke-resp
-     (send-channel-back event "ffmpeg-video-convert-begin-resp"))
+         success-invoke-resp
+         (send-channel-back event "ffmpeg-video-convert-begin-resp"))
     (go-loop []
       (let [ret (<! out)]
         (match [ret]
