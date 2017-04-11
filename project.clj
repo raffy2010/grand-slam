@@ -23,7 +23,9 @@
   :clean-targets ^{:protect false} ["resources/main.js"
                                     "resources/public/js/ui-core.js"
                                     "resources/public/js/ui-core.js.map"
-                                    "resources/public/js/ui-out"]
+                                    "resources/public/js/ui-out"
+                                    "resources/public/js/ui-release-out"]
+
   :sass {:target-path "resources/public/css"
          :source-paths ["resources/assets/styles"]}
   :cljsbuild
@@ -50,6 +52,7 @@
      :id "electron-release"
      :compiler {:output-to "resources/main.js"
                 :output-dir "resources/public/js/electron-release"
+                :target :nodejs
                 :optimizations :simple
                 :pretty-print true
                 :cache-analysis true}}
