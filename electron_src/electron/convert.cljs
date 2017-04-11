@@ -13,53 +13,82 @@
                                :audio ["aac" "mp3" "ac3"]}
                         :mkv  {:video ["h264" "mpeg1" "mpeg2" "mpeg4" "h265" "wmv" "theora" "msmpeg4v2" "vp8" "vp9"]
                                :audio ["opus" "vorbis" "mp3" "aac" "ac-3" "wma" "dts" "flac" "mlp" "alac" "dts-hd"]}
-                        :ogg  {:video ["h264" "mpeg1" "mpeg2" "mpeg4" "wmv" "theora"]
-                               :audio ["opus" "vorbis" "mp3" "flac"]}
+                        :ogg  {:video ["theora" "mpeg1" "mpeg2" "wmv"]
+                               :audio ["vorbis" "opus" "mp3" "flac"]}
                         :webm {:video ["vp8" "vp9"]
-                               :audio ["opus" "vorbis"]}
+                               :audio ["vorbis" "opus"]}
                         :flv  {:video ["h264"]
                                :audio ["aac" "mp3"]}})
 
 ;;; Based on quality produced from high to low
 ;;; libopus > libvorbis >= libfdk_aac > aac > libmp3lame >= eac3/ac3 > libtwolame > vorbis > mp2 > wmav2/wmav1
 
-(def codec-map {:mpeg1 "mpeg1video"
-                :mpeg2 "mpeg2video"
-                :mpeg4 "mpeg4"
-                :h264  "libx264"
-                :h265  "libx265"
-                :wmv  "wmv2"
-                :theora  "libtheora"
-                :msmpeg4v2  "msmpeg4v2"
-                :vp8  "libvpx"
-                :vp9  "libvpx-vp9"
-                :mp3  "libmp3lame"
-                :wma  "wmav2"
-                :vorbis  "libvorbis"
-                :opus  "libopus"
-                :aac  "libfdk_aac"
-                :ac-3  "ac3"
-                :dts  "dca"
-                :flac  "flac"
-                :mlp  "mlp"
-                :alac  "alac"})
+(def codec-map {:mpeg1 {:encoder "mpeg1video"
+                        :param ["-q:v" "3"]}
+                :mpeg2 {:encoder "mpeg2video"
+                        :param ["-q:v" "3"]}
+                :mpeg4 {:encoder "mpeg4"
+                        :param ["-q:v" "3"]}
+                :h264  {:encoder "libx264"
+                        :param ["-preset" "medium" "-crf" "23"]}
+                :h265  {:encoder "libx265"
+                        :param ["-preset" "medium" "-crf" "28"]}
+                :wmv  {:encoder "wmv2"}
+                :theora  {:encoder "libtheora"
+                          :param ["-q:v" "7"]}
+                :msmpeg4v2  {:encoder "msmpeg4v2"}
+                :vp8  {:encoder "libvpx"
+                       :param ["-crf" "10" "-b:v" "2M"]}
+                :vp9  {:encoder "libvpx-vp9"
+                       :param ["-crf" "10" "-b:v" "2M"]}
+                :mp3  {:encoder "libmp3lame"
+                       :param ["-q:a" "3"]}
+                :wma  {:encoder "wmav2"}
+                :vorbis  {:encoder "libvorbis"
+                          :param ["-q:a" "5"]}
+                :opus  {:encoder "libopus"}
+                :aac  {:encoder "libfdk_aac"
+                       :param ["-vbr" "3"]}
+                :ac-3  {:encoder "ac3"}
+                :dts  {:encoder "dca"}
+                :flac  {:encoder "flac"}
+                :mlp  {:encoder "mlp"}
+                :alac  {:encoder "alac"}})
 
 (defn col-contains?
  [x col]
  (some #(= x %) col))
 
-(defn gen-video-audio-codec
-  [file target]
-  (let [{:keys [video audio]} file
-        target-video-list (get-in container-support [(keyword target) :video])
-        target-audio-list (get-in container-support [(keyword target) :audio])
-        target-video (if (col-contains? video target-video-list)
+(defn codec-flag
+  [codec-type]
+  (match codec-type
+         :video "-c:v"
+         :audio "-c:a"
+         :subtitle "-c:s"))
+
+(defn get-encoder-info
+  [field codec]
+  (get-in codec-map [(keyword codec) field]))
+
+(def get-encoder-name (partial get-encoder-info :encoder))
+(def get-encoder-param (partial get-encoder-info :param))
+
+(defn gen-target-codec
+  [codec-type origin-codec target]
+  (let [flag (codec-flag codec-type)
+        target-codecs-list (get-in container-support [(keyword target) codec-type] [])
+        target-codec (if (col-contains? origin-codec
+                                        target-codecs-list)
                        "copy"
-                       ((keyword (first target-video-list)) codec-map))
-        target-audio (if (col-contains? audio target-audio-list)
-                       "copy"
-                       ((keyword (first target-audio-list)) codec-map))]
-    ["-c:v" target-video "-c:a" target-audio]))
+                       (first target-codecs-list))]
+    (match target-codec
+           "copy" [flag "copy"]
+           :else
+           (into [] (concat [flag (get-encoder-name target-codec)]
+                            (get-encoder-param target-codec))))))
+
+(def gen-target-video-codec (partial gen-target-codec :video))
+(def gen-target-audio-codec (partial gen-target-codec :audio))
 
 (defn get-codec
   "get codec from stream"
@@ -83,12 +112,17 @@
    (match [convert-option]
           [{:type convert-type}]
           (let [target-path (str (:target convert-option) "." convert-type)
-                video-codec (get-video-codec (:streams video))
-                audio-codec (get-audio-codec (:streams video))
-                codecs (gen-video-audio-codec
-                         {:video video-codec
-                          :audio audio-codec}
-                         convert-type)]
-            (into [] (concat base-args codecs [target-path]))))))
+                target-video-codec (-> video
+                                       :streams
+                                       get-video-codec
+                                       (gen-target-video-codec convert-type))
+                target-audio-codec (-> video
+                                       :streams
+                                       get-audio-codec
+                                       (gen-target-audio-codec convert-type))]
+            (into [] (concat base-args
+                             target-video-codec
+                             target-audio-codec
+                             [target-path]))))))
 
 
