@@ -13,12 +13,8 @@
                    :value "mkv"}
                   {:name "avi"
                    :value "avi"}
-                  {:name "mov"
-                   :value "mov"}
                   {:name "mpg"
                    :value "mpg"}
-                  {:name "mpeg"
-                   :value "mpeg"}
                   {:name "ts"
                    :value "ts"}
                   {:name "webm"
@@ -28,9 +24,7 @@
                   {:name "flv"
                    :value "flv"}
                   {:name "3gp"
-                   :value "3gp"}
-                  {:name "asf"
-                   :value "asf"}])
+                   :value "3gp"}])
 
 (defn toggle-convert-modal
   [file]

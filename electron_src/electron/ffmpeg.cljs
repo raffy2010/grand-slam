@@ -242,3 +242,11 @@
 (.on ipcMain "ffmpeg-video-export" handle-video-export)
 (.on ipcMain "ffmpeg-video-cancel-convert" handle-video-cancel-convert)
 
+(defn handle-clean-preview
+  [event file-id]
+  (spawn-process "rm"
+                 ["-rf" (.resolve path
+                                  preview-dir
+                                  file-id)]))
+
+(.on ipcMain "ffmpeg-clean-preview" handle-clean-preview)

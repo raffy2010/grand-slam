@@ -31,6 +31,13 @@
          {:status "ok" :data data} [nil data]
          {:status "error" :msg err} [err]))
 
+(defn clean-file
+  "doc-string"
+  [file-id]
+  (swap! active-files dissoc file-id)
+  (.send ipcRenderer "ffmpeg-clean-preview" file-id))
+
+
 (defn preview-src
   "gen preview image src with preview time index"
   [file-id index]
@@ -168,4 +175,3 @@
 (.on ipcRenderer "ffmpeg-video-convert-begin-resp" handle-convert-begin)
 (.on ipcRenderer "ffmpeg-video-convert-progress-resp" handle-convert-progress)
 (.on ipcRenderer "ffmpeg-video-convert-finish-resp" handle-convert-result)
-

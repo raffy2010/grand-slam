@@ -1,10 +1,11 @@
 (ns ui.component.video-item
- (:require [reagent.core :as r]
+ (:require [cljs.core.match :refer-macros [match]]
+           [reagent.core :as r]
            [cljs-react-material-ui.reagent :as ui]
            [cljs-react-material-ui.icons :as ic]
            [reanimated.core :as anim]
            [ui.state :refer [active-files tasks]]
-           [ui.ffmpeg :refer [cancel-convert]]
+           [ui.ffmpeg :refer [cancel-convert clean-file]]
            [ui.component.video-thumbnail :refer [video-thumbnail]]
            [ui.component.video-stream :refer [stream-item]]
            [ui.component.video-dialog :refer [convert-dialog]]))
@@ -23,11 +24,22 @@
     (swap! active-files update-in [file-id :detailed] not)))
 
 (defn toggle-convert-modal
- ""
+ "open video conversion modal"
  [file event elem]
  (let [file-id (:id file)
        mode (.-type (.-props elem))]
    (swap! active-files assoc-in [file-id :convert-mode] mode)))
+
+(defn handle-more
+  "handle more action with file"
+  [file event elem]
+  (let [file-id (:id file)
+        action (-> elem
+                   .-props
+                   .-action)]
+    (match action
+           "remove"
+           (clean-file file-id))))
 
 (defn handle-cancel
   [task event]
@@ -85,8 +97,10 @@
                                          [ui/icon-button {:on-click #(.stopPropagation %)}
                                           (ic/navigation-more-vert)])
                   :anchor-origin {:horizontal "right" :vertical "top"}
-                  :target-origin {:horizontal "right" :vertical "top"}}
-    [ui/menu-item {:primary-text "type"}]]])
+                  :target-origin {:horizontal "right" :vertical "top"}
+                  :on-item-touch-tap (partial handle-more file)}
+    [ui/menu-item {:primary-text "remove"
+                   :action "remove"}]]])
 
 (defn video-item
   "video item card"
