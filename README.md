@@ -1,11 +1,26 @@
-# Grand-Slam
+<h1 align="center">
+  <img width="256" src="https://raw.githubusercontent.com/raffy2010/grand-slam/master/resources/assets/logo/logo.png" alt="GrandSlam">
+  <br />
+  Grand-Slam
+</h1>
+<p align="center">a video editor based on FFmpeg, Electron, ClojureScript and Material design.</p>
 
-a video editor based on FFmpeg, Electron, ClojureScript and Material design.
+## Features
 
-### Development
+- [x] Video format conversion
+- [ ] Custom video conversion
+- [ ] Audio conversion
+- [ ] Subtitle support
+- [ ] Multiple system support
+- [ ] Auto update
 
+## Download
 
-#### Prerequisite
+just download from [releases](https://github.com/raffy2010/grand-slam/releases/latest)
+
+## Development
+
+### Prerequisite
 
 install prebuilt Electron binary
 ```shell
@@ -32,7 +47,7 @@ open the app
 electron .
 ```
 
-#### Release
+### Release
 
 build frontend stuff
 ```shell
@@ -57,7 +72,8 @@ electron-packager . GrandSlam \
                   --download.mirror=https://npm.taobao.org/mirrors/electron/ \
                   --platform=darwin \
                   --arch=x64 \
-                  --version=x.x.x \
+                  --electron-version=x.x.x \
+                  --logo=resources/assets/logo/logo.icns \
                   --overwrite \
                   --ignore="(electron_src|ui_src|dev_src|src|target|figwheel_server\.log|Procfile|electron-release|ui-release-out)"
 ```
