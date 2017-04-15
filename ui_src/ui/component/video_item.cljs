@@ -1,9 +1,11 @@
 (ns ui.component.video-item
- (:require [cljs.core.match :refer-macros [match]]
+ (:require [clojure.string :refer [join split]]
+           [cljs.core.match :refer-macros [match]]
            [reagent.core :as r]
            [cljs-react-material-ui.reagent :as ui]
            [cljs-react-material-ui.icons :as ic]
            [reanimated.core :as anim]
+           [ui.utils.common :refer [format-file-size format-time format-bitrate]]
            [ui.state :refer [active-files tasks]]
            [ui.ffmpeg :refer [cancel-convert clean-file]]
            [ui.component.video-thumbnail :refer [video-thumbnail]]
@@ -102,6 +104,26 @@
     [ui/menu-item {:primary-text "remove"
                    :action "remove"}]]])
 
+(defn format-filename
+ [filename]
+ (last (split filename "/")))
+
+(defn file-field
+  [field value]
+  (match field
+         :duration [:p {:class "single-field"}
+                    [ic/action-schedule]
+                    [:span (format-time (js/parseInt value 10))]]
+         :size [:p {:class "single-field"}
+                [ic/notification-ondemand-video]
+                [:span (format-file-size value)]]
+         :bit_rate [:p {:class "single-field"}
+                    [ic/action-trending-up]
+                    [:span (str (format-bitrate value) "/s")]]
+         :filename [:p {:class "single-field"}
+                    [ic/file-folder-open]
+                    [:span (format-filename value)]]))
+
 (defn video-item
   "video item card"
   [file]
@@ -113,9 +135,9 @@
             :on-click (partial toggle-file-select file)}
       [video-thumbnail file]
       [:div {:class "video-info"}
-       (for [field [:filename :bit_rate :size :duration]]
+       (for [field [:filename :size :bit_rate :duration]]
          ^{:key field}
-         [:p (str field ": " (get-in file [:format field]))])]
+         [:div (file-field field (get-in file [:format field]))])]
       (if-not (nil? task) [ui/linear-progress {:class "convert-progress-bar"
                                                :mode "determinate"
                                                :value (get-in task [:process :progress])}])
