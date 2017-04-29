@@ -13,7 +13,8 @@
                  [ring/ring-core "1.5.0"]
                  [binaryage/devtools "0.9.2"]
                  [figwheel-sidecar "0.5.8"]
-                 [reanimated "0.5.0"]]
+                 [reanimated "0.5.0"]
+                 [org.slf4j/slf4j-nop "1.7.13" :scope "test"]]
   :plugins [[lein-cljsbuild "1.1.5"]
             [lein-figwheel "0.5.8"]
             [deraen/lein-sass4clj "0.3.1"]
@@ -67,6 +68,7 @@
   :figwheel {:http-server-root "public"
              :css-dirs ["resources/public/css"]
              :ring-handler tools.figwheel-middleware/app
+             :server-logfile false
              :server-port 3449}
   :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
                                   [org.clojure/tools.nrepl "0.2.10"]]

@@ -39,7 +39,7 @@ gem install foreman
 
 start the dev flow
 ```shell
-foreman start
+./scripts/foreman_start.sh
 ```
 
 open the app
