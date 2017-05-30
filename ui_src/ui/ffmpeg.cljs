@@ -1,13 +1,13 @@
 (ns ui.ffmpeg
-  (:require [cljs.core.match :refer-macros [match]]
-            [ui.state :refer [active-files
-                              messages
-                              convert-option
-                              tasks]]
-            [ui.utils.common :refer [file-uid
-                                     msg-uid
-                                     task-uid]]
-            [ui.utils.lang :refer [js->clj-kw]]))
+ (:require [cljs.core.match :refer-macros [match]]
+           [ui.state :refer [active-files
+                             messages
+                             convert-option
+                             tasks]]
+           [ui.utils.common :refer [file-uid
+                                    msg-uid
+                                    task-uid]]
+           [ui.utils.lang :refer [js->clj-kw]]))
 
 (defonce path (js/require "path"))
 
@@ -92,19 +92,25 @@
 (def add-error-msg (partial add-msg :error))
 (def add-info-msg (partial add-msg :info))
 
-(defn check-stream-type
+(defn extract-stream
   [stream-type file]
   (->> file
        :streams
-       (filter #(= stream-type
-                   (:codec_type %)))
-       empty?
-       not))
+       (filter #(->> %
+                     :codec_type
+                     keyword
+                     (= stream-type)))
+       first))
 
+(def extract-video-stream (partial extract-stream :video))
+(def extract-audio-stream (partial extract-stream :audio))
+(def extract-subtitle-stream (partial extract-stream :subtitle))
 
-(def check-video-stream (partial check-stream-type "video"))
-(def check-audio-stream (partial check-stream-type "audio"))
-(def check-subtitle-stream (partial check-stream-type "subtitle"))
+(def check-stream-type extract-stream)
+
+(def check-video-stream (partial check-stream-type :video))
+(def check-audio-stream (partial check-stream-type :audio))
+(def check-subtitle-stream (partial check-stream-type :subtitle))
 
 (defn- handle-probe-result
   [event ret]

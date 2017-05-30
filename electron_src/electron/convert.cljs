@@ -109,20 +109,25 @@
         base-args ["-y" "-stats"
                    "-loglevel" "error"
                    "-i" file-path]]
-   (match [convert-option]
-          [{:type convert-type}]
-          (let [target-path (str (:target convert-option) "." convert-type)
-                target-video-codec (-> video
-                                       :streams
-                                       get-video-codec
-                                       (gen-target-video-codec convert-type))
-                target-audio-codec (-> video
-                                       :streams
-                                       get-audio-codec
-                                       (gen-target-audio-codec convert-type))]
-            (into [] (concat base-args
-                             target-video-codec
-                             target-audio-codec
-                             [target-path]))))))
+    (match [convert-option]
+           [{:type convert-type}]
+           (let [target-path (str (:target convert-option) "." convert-type)
+                 target-video-codec (-> video
+                                        :streams
+                                        get-video-codec
+                                        (gen-target-video-codec convert-type))
+                 target-audio-codec (-> video
+                                        :streams
+                                        get-audio-codec
+                                        (gen-target-audio-codec convert-type))]
+             (into [] (concat base-args
+                              target-video-codec
+                              target-audio-codec
+                              [target-path])))
+
+           [{:quality height}]
+           (into [] (concat base-args
+                            ["-vf" (str "scale=-1:" height)]
+                            [(:target convert-option)])))))
 
 
